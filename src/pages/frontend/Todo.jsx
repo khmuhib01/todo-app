@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {DndContext} from '@dnd-kit/core';
 import {Droppable} from '../../components/common/Droppable';
 import {Draggable} from '../../components/common/Draggable';
@@ -6,13 +6,18 @@ import AddCardModal from '../../components/common/AddCardModal';
 import {v4 as uuidv4} from 'uuid';
 import {FaRegFileAlt, FaRegClipboard, FaHashtag} from 'react-icons/fa';
 
-const initialTodos = [
-	/* your tasks */
-];
+const initialTodos = [];
 
 export default function Todo() {
 	const [todos, setTodos] = useState(initialTodos);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [contextMenu, setContextMenu] = useState(null);
+
+	useEffect(() => {
+		const close = () => setContextMenu(null);
+		document.addEventListener('click', close);
+		return () => document.removeEventListener('click', close);
+	}, []);
 
 	const handleDragEnd = (event) => {
 		const {active, over} = event;
@@ -35,6 +40,17 @@ export default function Todo() {
 		]);
 	};
 
+	const handleRightClick = (event, todo) => {
+		event.preventDefault();
+		setContextMenu({x: event.clientX, y: event.clientY, todo});
+	};
+
+	const handleMoveTo = (newStatus) => {
+		if (!contextMenu?.todo) return;
+		setTodos((prev) => prev.map((todo) => (todo.id === contextMenu.todo.id ? {...todo, status: newStatus} : todo)));
+		setContextMenu(null);
+	};
+
 	const getTodosByStatus = (status) => todos.filter((t) => t.status === status);
 
 	const statusList = ['new', 'ongoing', 'done'];
@@ -55,7 +71,10 @@ export default function Todo() {
 							<Droppable id={status}>
 								{getTodosByStatus(status).map((todo) => (
 									<Draggable key={todo.id} id={todo.id}>
-										<div className="bg-white p-3 rounded-md shadow-sm mb-3 border border-gray-200">
+										<div
+											onContextMenu={(e) => handleRightClick(e, todo)}
+											className="bg-white p-3 rounded-md shadow-sm mb-3 border border-gray-200"
+										>
 											<h3 className="text-sm font-medium mb-1">{todo.title}</h3>
 											<p className="text-xs text-gray-500 mb-2">{todo.description}</p>
 											<div className="flex text-xs text-gray-500 gap-4 items-center mb-2">
@@ -98,6 +117,29 @@ export default function Todo() {
 
 				{/* Modal */}
 				<AddCardModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddNew} />
+
+				{/* Context Menu */}
+				{contextMenu && (
+					<div
+						className="fixed bg-white shadow-md rounded border border-gray-200 z-50"
+						style={{top: contextMenu.y, left: contextMenu.x}}
+					>
+						{['new', 'ongoing', 'done']
+							.filter((status) => status !== contextMenu.todo.status)
+							.map((status) => (
+								<button
+									key={status}
+									onClick={(e) => {
+										e.stopPropagation();
+										handleMoveTo(status);
+									}}
+									className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+								>
+									Move to {status.charAt(0).toUpperCase() + status.slice(1)}
+								</button>
+							))}
+					</div>
+				)}
 			</div>
 		</DndContext>
 	);
