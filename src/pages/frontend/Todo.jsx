@@ -14,18 +14,18 @@ export default function Todo() {
 	const [contextMenu, setContextMenu] = useState(null);
 	const [dueModal, setDueModal] = useState({isOpen: false, todoId: null});
 	const [dueInput, setDueInput] = useState('');
+	const [overduePopup, setOverduePopup] = useState(false);
 
 	useEffect(() => {
-		const close = () => setContextMenu(null);
-		document.addEventListener('click', close);
-		return () => document.removeEventListener('click', close);
+		document.addEventListener('click', () => setContextMenu(null));
+		return () => document.removeEventListener('click', () => setContextMenu(null));
 	}, []);
 
 	useEffect(() => {
 		const now = new Date();
 		const overdueTasks = todos.filter((t) => t.status === 'ongoing' && t.dueTime && new Date(t.dueTime) < now);
 		if (overdueTasks.length > 0) {
-			alert(`⚠️ ${overdueTasks.length} ongoing task(s) are overdue!`);
+			setOverduePopup(true);
 		}
 	}, [todos]);
 
@@ -36,13 +36,11 @@ export default function Todo() {
 		const activeTodo = todos.find((t) => t.id === active.id);
 		if (!activeTodo || activeTodo.status === over.id) return;
 
-		// If dragged into ongoing, open due time modal
 		if (over.id === 'ongoing') {
 			setDueModal({isOpen: true, todoId: active.id});
-			return; // Don't update status yet — wait for user input
+			return;
 		}
 
-		// Else move directly
 		setTodos((prev) =>
 			prev.map((todo) =>
 				todo.id === active.id
@@ -81,12 +79,9 @@ export default function Todo() {
 
 		if (newStatus === 'ongoing') {
 			setDueModal({isOpen: true, todoId: contextMenu.todo.id});
-
-			// 👇 Delay hiding contextMenu so modal can open first
 			setTimeout(() => {
 				setContextMenu(null);
 			}, 0);
-
 			return;
 		}
 
@@ -136,7 +131,6 @@ export default function Todo() {
 	};
 
 	const statusList = ['new', 'ongoing', 'done'];
-
 	const getStatusLabel = (s) => (s === 'new' ? 'New' : s === 'ongoing' ? 'Ongoing' : 'Done');
 
 	return (
@@ -203,15 +197,10 @@ export default function Todo() {
 
 				<AddCardModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddNew} />
 
-				{/* Right-click menu */}
 				{contextMenu && (
 					<div
 						className="fixed bg-white shadow-md rounded border border-gray-200 z-50"
-						style={{
-							top: contextMenu.y,
-							left: contextMenu.x,
-							minWidth: '160px',
-						}}
+						style={{top: contextMenu.y, left: contextMenu.x, minWidth: '160px'}}
 					>
 						{['new', 'ongoing', 'done']
 							.filter((status) => status !== contextMenu.todo.status)
@@ -230,7 +219,6 @@ export default function Todo() {
 					</div>
 				)}
 
-				{/* Due Time Modal */}
 				{dueModal.isOpen && (
 					<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 						<div className="bg-white rounded p-6 w-full max-w-md shadow-xl">
@@ -252,6 +240,18 @@ export default function Todo() {
 									Set Due Time
 								</button>
 							</div>
+						</div>
+					</div>
+				)}
+
+				{overduePopup && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+						<div className="bg-white p-6 rounded shadow-lg w-full max-w-md text-center">
+							<h2 className="text-lg font-semibold mb-4 text-red-700">⚠️ Overdue Alert</h2>
+							<p className="mb-4">Some ongoing tasks have passed their due time.</p>
+							<button onClick={() => setOverduePopup(false)} className="bg-red-600 text-white px-4 py-2 rounded">
+								Close
+							</button>
 						</div>
 					</div>
 				)}
