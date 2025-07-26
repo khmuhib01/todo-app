@@ -12,6 +12,8 @@ export default function Todo() {
 	const [todos, setTodos] = useState(initialTodos);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [contextMenu, setContextMenu] = useState(null);
+	const [dueModal, setDueModal] = useState({isOpen: false, todoId: null});
+	const [dueInput, setDueInput] = useState('');
 
 	useEffect(() => {
 		const close = () => setContextMenu(null);
@@ -19,11 +21,39 @@ export default function Todo() {
 		return () => document.removeEventListener('click', close);
 	}, []);
 
+	useEffect(() => {
+		const now = new Date();
+		const overdueTasks = todos.filter((t) => t.status === 'ongoing' && t.dueTime && new Date(t.dueTime) < now);
+		if (overdueTasks.length > 0) {
+			alert(`⚠️ ${overdueTasks.length} ongoing task(s) are overdue!`);
+		}
+	}, [todos]);
+
 	const handleDragEnd = (event) => {
 		const {active, over} = event;
-		if (over && active.id !== over.id) {
-			setTodos((prev) => prev.map((todo) => (todo.id === active.id ? {...todo, status: over.id} : todo)));
+		if (!over || active.id === over.id) return;
+
+		const activeTodo = todos.find((t) => t.id === active.id);
+		if (!activeTodo || activeTodo.status === over.id) return;
+
+		// If dragged into ongoing, open due time modal
+		if (over.id === 'ongoing') {
+			setDueModal({isOpen: true, todoId: active.id});
+			return; // Don't update status yet — wait for user input
 		}
+
+		// Else move directly
+		setTodos((prev) =>
+			prev.map((todo) =>
+				todo.id === active.id
+					? {
+							...todo,
+							status: over.id,
+							completedAt: over.id === 'done' ? new Date() : todo.completedAt,
+					  }
+					: todo
+			)
+		);
 	};
 
 	const handleAddNew = ({title, description}) => {
@@ -47,11 +77,63 @@ export default function Todo() {
 
 	const handleMoveTo = (newStatus) => {
 		if (!contextMenu?.todo) return;
-		setTodos((prev) => prev.map((todo) => (todo.id === contextMenu.todo.id ? {...todo, status: newStatus} : todo)));
+		const now = new Date();
+
+		if (newStatus === 'ongoing') {
+			setDueModal({isOpen: true, todoId: contextMenu.todo.id});
+
+			// 👇 Delay hiding contextMenu so modal can open first
+			setTimeout(() => {
+				setContextMenu(null);
+			}, 0);
+
+			return;
+		}
+
+		setTodos((prev) =>
+			prev.map((todo) => {
+				if (todo.id !== contextMenu.todo.id) return todo;
+				if (newStatus === 'done') {
+					return {...todo, status: newStatus, completedAt: now};
+				}
+				return {...todo, status: newStatus};
+			})
+		);
 		setContextMenu(null);
 	};
 
-	const getTodosByStatus = (status) => todos.filter((t) => t.status === status);
+	const confirmDueTime = () => {
+		const now = new Date();
+		const due = dueInput ? new Date(dueInput) : null;
+		if (!due || isNaN(due.getTime())) {
+			alert('Please enter a valid date-time');
+			return;
+		}
+		setTodos((prev) =>
+			prev.map((todo) => {
+				if (todo.id !== dueModal.todoId) return todo;
+				return {
+					...todo,
+					status: 'ongoing',
+					movedAt: now,
+					dueTime: due.toISOString(),
+				};
+			})
+		);
+		setDueModal({isOpen: false, todoId: null});
+		setDueInput('');
+	};
+
+	const getTodosByStatus = (status) => {
+		const filtered = todos.filter((t) => t.status === status);
+		if (status === 'ongoing') {
+			return filtered.sort((a, b) => new Date(a.movedAt || 0) - new Date(b.movedAt || 0));
+		}
+		if (status === 'done') {
+			return filtered.sort((a, b) => new Date(a.completedAt || 0) - new Date(b.completedAt || 0));
+		}
+		return filtered;
+	};
 
 	const statusList = ['new', 'ongoing', 'done'];
 
@@ -66,7 +148,6 @@ export default function Todo() {
 						<div key={status} className="bg-gray-300 p-3 rounded-md shadow-md border border-gray-400">
 							<div className="flex justify-between items-center mb-2">
 								<h2 className="font-semibold text-sm">{getStatusLabel(status)}</h2>
-								<button className="text-gray-400 hover:text-gray-600">•••</button>
 							</div>
 							<Droppable id={status}>
 								{getTodosByStatus(status).map((todo) => (
@@ -88,6 +169,11 @@ export default function Todo() {
 													<FaHashtag className="text-gray-400" /> {todo.code}
 												</span>
 											</div>
+											{todo.status === 'ongoing' && todo.dueTime && (
+												<p className="text-xs text-red-600 font-medium mt-1">
+													Due: {new Date(todo.dueTime).toLocaleString()}
+												</p>
+											)}
 											<span
 												className={`inline-block px-2 py-0.5 text-xs rounded ${
 													todo.status === 'new'
@@ -115,14 +201,17 @@ export default function Todo() {
 					))}
 				</div>
 
-				{/* Modal */}
 				<AddCardModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddNew} />
 
-				{/* Context Menu */}
+				{/* Right-click menu */}
 				{contextMenu && (
 					<div
 						className="fixed bg-white shadow-md rounded border border-gray-200 z-50"
-						style={{top: contextMenu.y, left: contextMenu.x}}
+						style={{
+							top: contextMenu.y,
+							left: contextMenu.x,
+							minWidth: '160px',
+						}}
 					>
 						{['new', 'ongoing', 'done']
 							.filter((status) => status !== contextMenu.todo.status)
@@ -138,6 +227,32 @@ export default function Todo() {
 									Move to {status.charAt(0).toUpperCase() + status.slice(1)}
 								</button>
 							))}
+					</div>
+				)}
+
+				{/* Due Time Modal */}
+				{dueModal.isOpen && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+						<div className="bg-white rounded p-6 w-full max-w-md shadow-xl">
+							<h2 className="text-lg font-semibold mb-4">Set Due Time</h2>
+							<input
+								type="datetime-local"
+								className="w-full border rounded px-3 py-2 mb-4"
+								value={dueInput}
+								onChange={(e) => setDueInput(e.target.value)}
+							/>
+							<div className="flex justify-end gap-2">
+								<button
+									onClick={() => setDueModal({isOpen: false, todoId: null})}
+									className="bg-gray-300 px-4 py-2 rounded"
+								>
+									Cancel
+								</button>
+								<button onClick={confirmDueTime} className="bg-blue-600 text-white px-4 py-2 rounded">
+									Set Due Time
+								</button>
+							</div>
+						</div>
 					</div>
 				)}
 			</div>
