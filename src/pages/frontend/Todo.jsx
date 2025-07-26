@@ -44,9 +44,10 @@ export default function Todo() {
 	return (
 		<DndContext onDragEnd={handleDragEnd}>
 			<div className="min-h-screen bg-gray-100 p-6">
+				<h1 className="text-4xl font-bold mb-6 text-center">Todo List</h1>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					{statusList.map((status) => (
-						<div key={status} className="bg-gray-100 p-3 rounded-lg shadow-md">
+						<div key={status} className="bg-gray-300 p-3 rounded-md shadow-md border border-gray-400">
 							<div className="flex justify-between items-center mb-2">
 								<h2 className="font-semibold text-sm">{getStatusLabel(status)}</h2>
 								<button className="text-gray-400 hover:text-gray-600">•••</button>
