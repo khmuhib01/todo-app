@@ -1,3 +1,4 @@
+
 # 📝 Kanban Todo App (React + Vite + Redux)
 
 A fully functional **Kanban-style Todo Application** built with **React 19**, **Vite**, and **Redux Toolkit**, including:
@@ -14,6 +15,12 @@ A fully functional **Kanban-style Todo Application** built with **React 19**, **
 - 🌐 Multi-language support (i18n): English and বাংলা
 - 🔔 Notifications via `react-toastify`
 - 🧠 Redux Toolkit + middleware setup
+
+---
+
+## 📦 Built on Custom Boilerplate
+
+> This project is built using a **custom React + Vite scalable boilerplate** created by [kh muhib](https://github.com/khmuhib01), designed to support clean architecture, multi-layout, authentication, i18n, and production-ready setups.
 
 ---
 
@@ -61,7 +68,7 @@ npm run dev
 
 ---
 
-## 📦 Features
+## ✨ Core Features
 
 - ✅ Add/Edit/Delete Tasks (title + description)
 - ✅ Right-click to move between columns (excluding current column)
