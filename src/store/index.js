@@ -1,19 +1,26 @@
 import {configureStore} from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
+import todoReducer from './slices/todoSlice';
 import {persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER} from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage
+import storage from 'redux-persist/lib/storage';
 
-const persistConfig = {
-	key: 'root',
+const authPersistConfig = {
+	key: 'auth',
 	storage,
-	whitelist: ['auth'], // ✅ only persist auth slice
 };
 
-const persistedAuthReducer = persistReducer(persistConfig, authReducer);
+const todoPersistConfig = {
+	key: 'todo',
+	storage,
+};
+
+const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
+const persistedTodoReducer = persistReducer(todoPersistConfig, todoReducer);
 
 export const store = configureStore({
 	reducer: {
 		auth: persistedAuthReducer,
+		todo: persistedTodoReducer,
 	},
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware({

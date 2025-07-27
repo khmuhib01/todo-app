@@ -4,10 +4,14 @@ import {Droppable} from '../../components/common/Droppable';
 import {Draggable} from '../../components/common/Draggable';
 import AddCardModal from '../../components/common/AddCardModal';
 import {v4 as uuidv4} from 'uuid';
-import {FaRegFileAlt, FaRegClipboard, FaHashtag, FaEdit, FaTrash} from 'react-icons/fa';
+import {useDispatch, useSelector} from 'react-redux';
+import {addTodo, updateTodo, deleteTodo as removeTodo} from '../../store/slices/todoSlice';
 
 export default function Todo() {
-	const [todos, setTodos] = useState([]);
+	const dispatch = useDispatch();
+	const todos = useSelector((state) => state.todo.todos);
+
+	console.log(todos);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [contextMenu, setContextMenu] = useState(null);
 	const [dueModal, setDueModal] = useState({isOpen: false, todoId: null});
@@ -39,31 +43,28 @@ export default function Todo() {
 			return;
 		}
 
-		setTodos((prev) =>
-			prev.map((todo) =>
-				todo.id === active.id
-					? {
-							...todo,
-							status: over.id,
-							completedAt: over.id === 'done' ? new Date() : todo.completedAt,
-					  }
-					: todo
-			)
+		dispatch(
+			updateTodo({
+				id: active.id,
+				data: {
+					status: over.id,
+					completedAt: over.id === 'done' ? new Date().toISOString() : activeTodo.completedAt,
+				},
+			})
 		);
 	};
 
 	const handleAddNew = ({title, description}) => {
 		const code = '#' + Math.floor(Math.random() * 10000);
-		setTodos((prev) => [
-			{
+		dispatch(
+			addTodo({
 				id: uuidv4(),
 				title,
 				description,
 				code,
 				status: 'new',
-			},
-			...prev,
-		]);
+			})
+		);
 	};
 
 	const handleRightClick = (event, todo) => {
@@ -80,17 +81,14 @@ export default function Todo() {
 			return;
 		}
 
-		const now = new Date();
-		setTodos((prev) =>
-			prev.map((todo) =>
-				todo.id === contextMenu.todo.id
-					? {
-							...todo,
-							status: newStatus,
-							completedAt: newStatus === 'done' ? now : todo.completedAt,
-					  }
-					: todo
-			)
+		dispatch(
+			updateTodo({
+				id: contextMenu.todo.id,
+				data: {
+					status: newStatus,
+					completedAt: newStatus === 'done' ? new Date().toISOString() : contextMenu.todo.completedAt,
+				},
+			})
 		);
 		setContextMenu(null);
 	};
@@ -101,12 +99,15 @@ export default function Todo() {
 			alert('Please enter a valid date-time');
 			return;
 		}
-		setTodos((prev) =>
-			prev.map((todo) =>
-				todo.id === dueModal.todoId
-					? {...todo, status: 'ongoing', dueTime: due.toISOString(), movedAt: new Date()}
-					: todo
-			)
+		dispatch(
+			updateTodo({
+				id: dueModal.todoId,
+				data: {
+					status: 'ongoing',
+					dueTime: due.toISOString(),
+					movedAt: new Date().toISOString(),
+				},
+			})
 		);
 		setDueModal({isOpen: false, todoId: null});
 		setDueInput('');
@@ -125,17 +126,17 @@ export default function Todo() {
 	};
 
 	const saveEdit = () => {
-		setTodos((prev) =>
-			prev.map((t) =>
-				t.id === editModal.todo.id ? {...t, title: editForm.title, description: editForm.description} : t
-			)
+		dispatch(
+			updateTodo({
+				id: editModal.todo.id,
+				data: {title: editForm.title, description: editForm.description},
+			})
 		);
 		setEditModal({isOpen: false, todo: null});
 	};
 
 	const deleteTodo = (id) => {
-		console.log(id);
-		setTodos((prev) => prev.filter((t) => t.id !== id));
+		dispatch(removeTodo(id));
 	};
 
 	const statusList = ['new', 'ongoing', 'done'];
