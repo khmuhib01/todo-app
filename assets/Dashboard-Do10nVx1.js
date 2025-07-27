@@ -1,0 +1,1 @@
+import{u as e,b as n,j as t,l as i}from"./index-B27vhTCC.js";const u=()=>{const o=e(),s=n(),a=()=>{o(i()),s("/login")};return t.jsxs(t.Fragment,{children:[t.jsx("h2",{children:"Admin Dashboard"}),t.jsx("button",{onClick:a,className:"bg-red-500 text-white px-3 py-1 rounded mt-4",children:"Logout"})]})};export{u as default};
