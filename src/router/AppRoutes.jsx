@@ -13,7 +13,7 @@ const Users = lazy(() => import('../pages/backend/Users'));
 const Login = lazy(() => import('../pages/Login'));
 
 const AppRoutes = () => (
-	<BrowserRouter>
+	<BrowserRouter basename="/todo-app">
 		<Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
 			<Routes>
 				{/* <Route path="/" element={<FrontendLayout />}>
