@@ -4,14 +4,13 @@ import {Droppable} from '../../components/common/Droppable';
 import {Draggable} from '../../components/common/Draggable';
 import AddCardModal from '../../components/common/AddCardModal';
 import {v4 as uuidv4} from 'uuid';
-import {useDispatch, useSelector} from 'react-redux';
-import {addTodo, updateTodo, deleteTodo as removeTodo} from '../../store/slices/todoSlice';
 
 export default function Todo() {
-	const dispatch = useDispatch();
-	const todos = useSelector((state) => state.todo.todos);
-
-	console.log(todos);
+	// const [todos, setTodos] = useState([]);
+	const [todos, setTodos] = useState(() => {
+		const saved = localStorage.getItem('kanban_todos');
+		return saved ? JSON.parse(saved) : [];
+	});
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [contextMenu, setContextMenu] = useState(null);
 	const [dueModal, setDueModal] = useState({isOpen: false, todoId: null});
@@ -24,6 +23,15 @@ export default function Todo() {
 		document.addEventListener('click', () => setContextMenu(null));
 		return () => document.removeEventListener('click', () => setContextMenu(null));
 	}, []);
+
+	useEffect(() => {
+		const saved = localStorage.getItem('kanban_todos');
+		if (saved) setTodos(JSON.parse(saved));
+	}, []);
+
+	useEffect(() => {
+		localStorage.setItem('kanban_todos', JSON.stringify(todos));
+	}, [todos]);
 
 	useEffect(() => {
 		const now = new Date();
@@ -43,28 +51,27 @@ export default function Todo() {
 			return;
 		}
 
-		dispatch(
-			updateTodo({
-				id: active.id,
-				data: {
-					status: over.id,
-					completedAt: over.id === 'done' ? new Date().toISOString() : activeTodo.completedAt,
-				},
-			})
+		setTodos((prev) =>
+			prev.map((todo) =>
+				todo.id === active.id
+					? {...todo, status: over.id, completedAt: over.id === 'done' ? new Date() : todo.completedAt}
+					: todo
+			)
 		);
 	};
 
 	const handleAddNew = ({title, description}) => {
 		const code = '#' + Math.floor(Math.random() * 10000);
-		dispatch(
-			addTodo({
+		setTodos((prev) => [
+			{
 				id: uuidv4(),
 				title,
 				description,
 				code,
 				status: 'new',
-			})
-		);
+			},
+			...prev,
+		]);
 	};
 
 	const handleRightClick = (event, todo) => {
@@ -74,21 +81,19 @@ export default function Todo() {
 
 	const handleMoveTo = (newStatus) => {
 		if (!contextMenu?.todo) return;
-
 		if (newStatus === 'ongoing') {
 			setDueModal({isOpen: true, todoId: contextMenu.todo.id});
 			setContextMenu(null);
 			return;
 		}
 
-		dispatch(
-			updateTodo({
-				id: contextMenu.todo.id,
-				data: {
-					status: newStatus,
-					completedAt: newStatus === 'done' ? new Date().toISOString() : contextMenu.todo.completedAt,
-				},
-			})
+		const now = new Date();
+		setTodos((prev) =>
+			prev.map((todo) =>
+				todo.id === contextMenu.todo.id
+					? {...todo, status: newStatus, completedAt: newStatus === 'done' ? now : todo.completedAt}
+					: todo
+			)
 		);
 		setContextMenu(null);
 	};
@@ -99,15 +104,12 @@ export default function Todo() {
 			alert('Please enter a valid date-time');
 			return;
 		}
-		dispatch(
-			updateTodo({
-				id: dueModal.todoId,
-				data: {
-					status: 'ongoing',
-					dueTime: due.toISOString(),
-					movedAt: new Date().toISOString(),
-				},
-			})
+		setTodos((prev) =>
+			prev.map((todo) =>
+				todo.id === dueModal.todoId
+					? {...todo, status: 'ongoing', dueTime: due.toISOString(), movedAt: new Date()}
+					: todo
+			)
 		);
 		setDueModal({isOpen: false, todoId: null});
 		setDueInput('');
@@ -126,17 +128,16 @@ export default function Todo() {
 	};
 
 	const saveEdit = () => {
-		dispatch(
-			updateTodo({
-				id: editModal.todo.id,
-				data: {title: editForm.title, description: editForm.description},
-			})
+		setTodos((prev) =>
+			prev.map((t) =>
+				t.id === editModal.todo.id ? {...t, title: editForm.title, description: editForm.description} : t
+			)
 		);
 		setEditModal({isOpen: false, todo: null});
 	};
 
 	const deleteTodo = (id) => {
-		dispatch(removeTodo(id));
+		setTodos((prev) => prev.filter((t) => t.id !== id));
 	};
 
 	const statusList = ['new', 'ongoing', 'done'];
@@ -159,6 +160,20 @@ export default function Todo() {
 											<h3 className="font-semibold text-sm">{todo.title}</h3>
 											<p className="text-xs text-gray-600 mb-1">{todo.description}</p>
 											<p className="text-[11px] text-gray-400">Code: {todo.code}</p>
+											<span
+												className={`inline-block text-[10px] font-semibold px-2 py-1 rounded mt-1
+		${
+			todo.status === 'new'
+				? 'bg-blue-100 text-blue-700'
+				: todo.status === 'ongoing'
+				? 'bg-orange-100 text-orange-700'
+				: 'bg-green-100 text-green-700'
+		}
+	`}
+											>
+												{todo.status.toUpperCase()}
+											</span>
+
 											{status === 'ongoing' && todo.dueTime && (
 												<p className="text-xs text-red-600 mt-1">Due: {new Date(todo.dueTime).toLocaleString()}</p>
 											)}
