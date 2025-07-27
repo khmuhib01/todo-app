@@ -1,20 +1,19 @@
-# 🚀 Vite + React Scalable Starter Project
+# 📝 Kanban Todo App (React + Vite + Redux)
 
-A production-ready, scalable React project powered by **Vite** with:
+A fully functional **Kanban-style Todo Application** built with **React 19**, **Vite**, and **Redux Toolkit**, including:
 
-- ⚛️ React 19
-- ⚡ Vite for blazing fast builds
-- 🛠️ Redux Toolkit + redux-persist
-- 🔐 Protected routes (auth-based)
-- 🧩 Multi-layout support (Frontend & Backend)
-- 🌐 i18n (multi-language support)
-- 🎨 Tailwind CSS + Dark Mode toggle
-- 🔔 React Toastify for notifications
-- 📦 Lazy loading (code splitting)
-- 📝 Form validation with react-hook-form + yup
-- 🌍 SEO optimization with react-helmet-async
-- 🧪 Unit testing setup with Jest + React Testing Library
-- 🔑 .env environment variable support
+- 📋 Kanban board with three columns: **New**, **Ongoing**, and **Done**
+- 🧱 Drag and drop (via `@dnd-kit`) between columns
+- 🕓 Due time selector for ongoing tasks with **overdue alert**
+- 🖱️ Right-click context menu to move tasks
+- ✏️ Task **edit** and 🗑️ **delete** support
+- 💾 Persisted tasks using **localStorage** (`redux-persist`)
+- 🔐 Protected admin dashboard via `ProtectedRoute`
+- 🎨 Tailwind CSS responsive UI
+- 🌙 Dark Mode toggle
+- 🌐 Multi-language support (i18n): English and বাংলা
+- 🔔 Notifications via `react-toastify`
+- 🧠 Redux Toolkit + middleware setup
 
 ---
 
@@ -22,18 +21,16 @@ A production-ready, scalable React project powered by **Vite** with:
 
 ```
 src/
-├── api/                # Axios clients
-├── assets/             # Images, fonts
-├── components/         # UI components
-├── hooks/              # Custom hooks (e.g. dark mode)
-├── i18n/               # Language JSON files
+├── components/         # UI Components (TodoCard, Modals, etc)
 ├── layouts/            # Frontend & Backend layouts
-├── pages/              # Route pages (frontend/admin)
-├── router/             # React Router setup + ProtectedRoute
-├── store/              # Redux Toolkit store & slices
-├── App.jsx             # App entry point
-├── main.jsx            # Root ReactDOM render
-└── index.css           # Tailwind styles
+├── pages/              # Todo, Dashboard, Users, etc.
+├── router/             # Routing setup with ProtectedRoute
+├── store/              # Redux slices (auth, todo)
+├── assets/             # Static assets (icons, images)
+├── i18n/               # Translations
+├── App.jsx             # App entry
+├── main.jsx            # Root render with Redux, Router
+└── index.css           # Tailwind global styles
 ```
 
 ---
@@ -43,12 +40,12 @@ src/
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/your-username/your-project.git
-cd your-project
+git clone https://github.com/your-username/todo-app.git
+cd todo-app
 npm install
 ```
 
-### 2. Run Dev Server
+### 2. Start Development Server
 
 ```bash
 npm run dev
@@ -56,102 +53,73 @@ npm run dev
 
 ---
 
-## 🔧 Environment Setup
+## 🔐 Auth & Admin
 
-### Create `.env` in root:
-
-```
-VITE_API_BASE_URL=https://your-api.com
-VITE_APP_TITLE=My App
-```
-
-Supports:
-- `.env`
-- `.env.local`
-- `.env.production`
+- Login page for accessing the admin dashboard
+- Redux `authSlice` with persisted login
+- `/admin` routes protected using `<ProtectedRoute />`
 
 ---
 
-## 🌐 Multi-language Support (i18n)
+## 📦 Features
 
-- English (EN)
-- বাংলা (BN)
-- Uses `react-i18next` + `localStorage` for language persistence
+- ✅ Add/Edit/Delete Tasks (title + description)
+- ✅ Right-click to move between columns (excluding current column)
+- ✅ Drag-and-drop support (Dnd Kit)
+- ✅ Set due time on "Ongoing" tasks (with datetime picker)
+- ✅ Show alert if task is overdue
+- ✅ Task state persistence using `redux-persist`
+- ✅ Responsive design with Tailwind
+- ✅ Multilingual UI (EN / বাংলা)
+- ✅ Toast notifications
+
+---
+
+## 🌐 i18n Support
+
+- Language switcher built using `react-i18next`
+- Stored preference in `localStorage`
 
 ---
 
 ## 🌙 Dark Mode
 
-Toggle between Light/Dark themes with a simple state + Tailwind `dark:` classes.
+Dark mode toggle using Tailwind’s `dark:` utility and `useDarkMode` hook.
 
 ---
 
-## 🔐 Auth & Protected Routes
+## 🛠️ Build & Deploy
 
-- Redux `authSlice` with persisted login state
-- Protected admin routes using `<ProtectedRoute />`
-
----
-
-## 🔥 Toast Notifications
-
-- Uses `react-toastify` for login/logout, form feedback, errors
-
----
-
-## ✅ Form Validation
-
-- Built with `react-hook-form` + `yup`
-- Realtime form validation + error messages
-
----
-
-## 📦 Code Splitting (Lazy Loading)
-
-All route-based pages are lazy-loaded using `React.lazy()` and `Suspense`.
-
----
-
-## 🧪 Unit Testing
-
-Setup with:
-- `Jest`
-- `React Testing Library`
-- DOM testing with `@testing-library/jest-dom`
-
-To run tests:
+### Local Build
 
 ```bash
-npm test
+npm run build
 ```
 
----
+### GitHub Pages Deploy
 
-## 📈 SEO Optimization
+Make sure `vite.config.js` has:
 
-- Uses `react-helmet-async`
-- Per-page dynamic `<title>` and `<meta>` tags
-- Works with social media meta like `og:title`
+```js
+base: '/todo-app/'
+```
 
----
+Then:
 
-## ✨ Coming Features (Optional Additions)
-
-- [ ] Role-based access control (RBAC)
-- [ ] API interceptors for auth
-- [ ] Reusable form components
-- [ ] Real API integration
+```bash
+npm run deploy
+```
 
 ---
 
 ## 👤 Author
 
 **kh muhib**  
-Frontend Engineer | React Specialist  
-[GitHub](https://github.com/khmuhib01) | [Portfolio](http://khmuhib.dev)
+Frontend Engineer | React Developer  
+🔗 [GitHub](https://github.com/khmuhib01)
 
 ---
 
 ## 📄 License
 
-MIT — free to use for personal or commercial projects.
+MIT — Free to use, modify, and distribute.
